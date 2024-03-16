@@ -9,24 +9,63 @@ const cards = [
   { title: "The Persistence of Memory", description: "Salvador Dalí's famous surrealistic work, known for its melting clocks, explores the concept of softness and hardness." }
 ];
 
+const InsertTextButton = ({ insertText, checkGuess }) => {
+  const [text, setText] = useState("");
+
+  const handleInsertText = () => {
+    insertText(text); // Insert text into the state
+    checkGuess(); // Check the guess when text is inserted
+  };
+
+  return (
+    <div>
+      <textarea value={text} onChange={(e) => setText(e.target.value)} />
+      <button onClick={handleInsertText}>Submit Guess</button>
+    </div>
+  );
+};
 function App() {
-  const [currentCardIndex, setCurrentCardIndex] = useState(0); // Track the current card index
-  const [isFlipped, setIsFlipped] = useState(false); // State to track the flipped status of the card
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [guessCorrect, setGuessCorrect] = useState(null);
+  const [insertedText, setInsertedText] = useState(""); // State to store inserted text
 
   const handleNext = () => {
-    // Ensure card is not flipped when moving to the next card
     setIsFlipped(false);
-    // Select a random card
-    let nextIndex = Math.floor(Math.random() * cards.length);
-    while (nextIndex === currentCardIndex) {
-      nextIndex = Math.floor(Math.random() * cards.length); // Ensure a new card is always selected
-    }
+    const nextIndex = (currentCardIndex + 1) % cards.length;
     setCurrentCardIndex(nextIndex);
+    setGuessCorrect(null);
+    setInsertedText(""); // Reset inserted text
+  };
+
+  const handleBack = () => {
+    setIsFlipped(false);
+    const nextIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+    setCurrentCardIndex(nextIndex);
+    setGuessCorrect(null);
+    setInsertedText(""); // Reset inserted text
   };
 
   const toggleFlip = () => {
-    setIsFlipped(!isFlipped); // Toggle the isFlipped state
+    if (insertedText.trim() !== "") { // Check if a guess has been submitted
+      setIsFlipped(!isFlipped);
+    }
   };
+  
+  const insertText = (text) => {
+    setInsertedText(text); // Update inserted text state
+  };
+
+  const checkGuess = () => {
+    const correctAnswer = cards[currentCardIndex].description.toLowerCase().trim();
+    const normalizedInsertedText = insertedText.toLowerCase().trim();
+
+    if (correctAnswer === normalizedInsertedText) {
+      setGuessCorrect(true);
+    } else {
+      setGuessCorrect(false);
+    }
+  };  
 
   return (
     <div className="App">
@@ -39,17 +78,23 @@ function App() {
       <div className="flip-card" onClick={toggleFlip}>
         <div className="flip-card-inner" style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
           <div className="flip-card-front">
-            {/* Display the title or the description based on flip state */}
-              <h1>{cards[currentCardIndex].title}</h1>
+            <h1>{cards[currentCardIndex].title}</h1>
           </div>
           <div className="flip-card-back">
-          <p>{cards[currentCardIndex].description}</p>
+            <p>{isFlipped ? cards[currentCardIndex].description : "Insert your guess here"}</p>
           </div>
         </div>
       </div>
+      <h1> Guess the Answer</h1>
+      <InsertTextButton insertText={insertText} checkGuess={checkGuess} />
+      {guessCorrect !== null && (
+        <p>{guessCorrect ? "Correct!" : "Incorrect!"}</p>
+      )}
+      <button onClick={handleBack}>Back</button>
       <button onClick={handleNext}>Next</button>
     </div>
   );
 }
+
 
 export default App;
